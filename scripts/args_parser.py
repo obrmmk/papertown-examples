@@ -68,21 +68,21 @@ class ArgsHandler:
 
     def _create_training_args(self, args_dict):
         training_args = TrainingArguments(
-        gradient_accumulation_steps = args_dict['gradient_accumulation_steps'],
-        logging_steps = args_dict['logging_steps'],
-        save_steps = args_dict['logging_steps'],
-        learning_rate = args_dict['learning_rate'],
-        num_train_epochs = args_dict['num_train_epochs'],
-        auto_find_batch_size = args_dict['auto_find_batch_size'],
-        per_device_train_batch_size = args_dict['per_device_train_batch_size'],
-        per_device_eval_batch_size = args_dict['per_device_eval_batch_size'],
-        do_eval = args_dict['do_eval'],
-        lr_scheduler_type = args_dict['lr_scheduler_type'],
-        fp16 = args_dict['fp16'],
-        weight_decay = args_dict['weight_decay'],
-        save_total_limit = args_dict['save_total_limit'],
-        overwrite_output_dir = args_dict['overwrite_output_dir'],
-        output_dir = args_dict['output_dir']
+            gradient_accumulation_steps = args_dict['gradient_accumulation_steps'],
+            logging_steps = args_dict['logging_steps'],
+            save_steps = args_dict['logging_steps'],
+            learning_rate = args_dict['learning_rate'],
+            num_train_epochs = args_dict['num_train_epochs'],
+            auto_find_batch_size = args_dict['auto_find_batch_size'],
+            per_device_train_batch_size = args_dict['per_device_train_batch_size'],
+            per_device_eval_batch_size = args_dict['per_device_eval_batch_size'],
+            do_eval = args_dict['do_eval'],
+            lr_scheduler_type = args_dict['lr_scheduler_type'],
+            fp16 = args_dict['fp16'],
+            weight_decay = args_dict['weight_decay'],
+            save_total_limit = args_dict['save_total_limit'],
+            overwrite_output_dir = args_dict['overwrite_output_dir'],
+            output_dir = args_dict['output_dir']
         )
         return training_args
 
