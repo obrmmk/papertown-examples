@@ -13,4 +13,4 @@ source ~/cuda/bin/activate
 
 export PT_CACHE_DIR=$SGE_LOCALDIR
 
-python3 train_model.py --config ../config/training_setup.yaml --urls ../dataset/urls.txt
+python3 train_model.py --config ../config/training_setup.yaml --urls ../datasets/urls.txt
