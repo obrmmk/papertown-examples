@@ -13,18 +13,27 @@ class FileLoader:
         except Exception as e:
             print(f"Error loading config from {filename}: {e}")
             return {}
-
-    @staticmethod
-    def load_urls_from_txtfile(filename):
+        
+    @staticmethod 
+    def load_urls_from_txtfile(filename, sample_size):
         with open(filename, 'r') as file:
-            return [line.strip() for line in file.readlines()]
+            urls = [line.strip() for line in file.readlines()]
 
+            # Append the sample size to the URL, but only if sample_size is provided (i.e., not -1)
+            if sample_size != -1:
+                urls = [url + f'[:{sample_size}]' for url in urls]
+            return urls
+        
 class ArgsHandler:
     def __init__(self):
         self.parser = self._get_parser()
 
     def _get_parser(self):
         parser = argparse.ArgumentParser()
+
+        parser.add_argument('--local_rank', type=int, default=-1, help='Local rank for distributed training')
+        parser.add_argument('--deepspeed', type=str, help='Path to deepspeed config file')
+
         parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
         parser.add_argument("--urls", type=str, required=True, help="Path to the file containing URLs")
 
@@ -39,8 +48,10 @@ class ArgsHandler:
         parser.add_argument("--entity", type=str)
         parser.add_argument("--project", type=str)
 
-        parser.add_argument("--gradient_accumulation_steps", type=int, default=256) # also used for block_size. max: 2,048
-        parser.add_argument("--logging_steps", type=int, default=2) # also used for save_steps.
+        parser.add_argument("--gradient_accumulation_steps", type=int, default=256, 
+                    help="Number of steps for gradient accumulation. Also used for block_size. Max value is 2,048.")
+        parser.add_argument("--logging_steps", type=int, default=2, 
+                            help="Number of steps for logging. Also used for save_steps.")
         parser.add_argument("--learning_rate", type=float, default=5e-4)
         parser.add_argument("--num_train_epochs", type=int, default=3)
         
@@ -53,8 +64,8 @@ class ArgsHandler:
         parser.add_argument("--weight_decay", type=int, default=0.1)
         parser.add_argument("--save_total_limit", type=int, default=5)
         parser.add_argument("--overwrite_output_dir", default=True)
-        parser.add_argument("--output_dir", type=str, default="./output") # checkpoints will be saved.
-        parser.add_argument("--trained_dir", type=str, default="./trained") # trained model will be saved.
+        parser.add_argument("--output_dir", type=str, default="./output", help="Directory where checkpoints will be saved.")
+        parser.add_argument("--trained_dir", type=str, default="./trained", help="Directory where the trained model will be saved.")
         parser.add_argument("--sample_size", type=int, default=-1)
 
         return parser
