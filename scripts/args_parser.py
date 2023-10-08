@@ -15,13 +15,9 @@ class FileLoader:
             return {}
         
     @staticmethod 
-    def load_urls_from_txtfile(filename, sample_size):
+    def load_urls_from_txtfile(filename):
         with open(filename, 'r') as file:
             urls = [line.strip() for line in file.readlines()]
-
-            # Append the sample size to the URL, but only if sample_size is provided (i.e., not -1)
-            if sample_size != -1:
-                urls = [url + f'[:{sample_size}]' for url in urls]
             return urls
         
 class ArgsHandler:
@@ -36,7 +32,6 @@ class ArgsHandler:
 
         parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
         parser.add_argument("--urls", type=str, required=True, help="Path to the file containing URLs")
-
 
         parser.add_argument("--max_length", type=int, default=None)
         parser.add_argument("--n_dims", type=int, default=None)
@@ -66,7 +61,9 @@ class ArgsHandler:
         parser.add_argument("--overwrite_output_dir", default=True)
         parser.add_argument("--output_dir", type=str, default="./output", help="Directory where checkpoints will be saved.")
         parser.add_argument("--trained_dir", type=str, default="./trained", help="Directory where the trained model will be saved.")
-        parser.add_argument("--sample_size", type=int, default=-1)
+        parser.add_argument("--test_run", type=int, default=None)
+
+        parser.add_argument("--dp_lambda", type=int, default=None)
 
         return parser
     
