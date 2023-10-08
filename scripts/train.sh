@@ -16,4 +16,4 @@ export PT_CACHE_DIR=$SGE_LOCALDIR
 CONFIG_PATH="../config/training_setup.yaml"  # Configuration for the training setup
 URLS_PATH="../datasets/urls.txt"             # List of URLs for datasets
 
-python3 train_distributed.py --config $CONFIG_PATH --urls $URLS_PATH
+python3 train.py --config $CONFIG_PATH --urls $URLS_PATH

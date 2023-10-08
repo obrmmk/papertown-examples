@@ -18,4 +18,4 @@ CONFIG_PATH="../config/training_setup.yaml"  # Configuration for the training se
 URLS_PATH="../datasets/urls.txt"             # List of URLs for datasets
 DEEPSPEED_CONFIG="../ds_config/ds_config_zero2.json"  # DeepSpeed configuration file
 
-deepspeed --launcher OpenMPI train_distributed.py --deepspeed $DEEPSPEED_CONFIG --config $CONFIG_PATH --urls $URLS_PATH 
+deepspeed --launcher OpenMPI train.py --deepspeed $DEEPSPEED_CONFIG --config $CONFIG_PATH --urls $URLS_PATH 
