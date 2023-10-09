@@ -1,54 +1,32 @@
-import os
-import wandb
-import torch.distributed as dist
-
 from transformers import DataCollatorForLanguageModeling
 from transformers import Trainer
 
 from papertown import DataComposer, load_tokenizer
 from papertown.new_model import new_Llama2
-from papertown import DP
-from args_parser import ArgsHandler, FileLoader, ModelCreator
 
-IS_DISTRIBUTED = 'WORLD_SIZE' in os.environ and int(os.environ['WORLD_SIZE']) > 1
-if IS_DISTRIBUTED:
-    dist.init_process_group(backend='nccl', init_method='env://')
+from args_parser import ArgsHandler, initialize_wandb, create_model, add_noise
 
 args_handler = ArgsHandler()
-args, training_args = args_handler.get_args()
-urls = FileLoader.load_urls_from_txtfile(args['urls'])
+args, composer_args, training_args= args_handler.get_args()
 
-try:
-    if not IS_DISTRIBUTED or (IS_DISTRIBUTED and dist.get_rank() == 0):
-        wandb.init(
-            entity= args['entity'], 
-            project= args['project'],
-            name= args['name']
-        )
-        wandb.alert (title= "Job Started", text= "動いたよ! Yay!" )
+initialize_wandb(args)
 
-    tokenizer = load_tokenizer()
-    model = ModelCreator.create(new_Llama2, args, tokenizer)
+tokenizer = load_tokenizer()
+model = create_model(new_Llama2, args, tokenizer)
+composer_args = add_noise(args, composer_args, tokenizer)
 
-    dp_lambda = args['dp_lambda']
-    DP = DP(tokenizer, lambda_=dp_lambda) if dp_lambda is not None else None
+with DataComposer(**composer_args) as dataset: 
+ 
+    data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
-    with DataComposer(url_list=urls, format='pre',
-                    block_size=args['gradient_accumulation_steps'], build_fn=DP, test_run = args['test_run'], prefetch=1) as dataset: 
-        data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=dataset,
+        data_collator=data_collator,
+    )
 
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            train_dataset=dataset,
-            data_collator=data_collator,
-        )
-
-        result = trainer.train()
-        output_path = args['trained_dir']
-        tokenizer.save_pretrained(output_path)
-        model.save_pretrained(output_path)
-
-finally:
-    if IS_DISTRIBUTED:
-        dist.destroy_process_group()
+    result = trainer.train()
+    output_path = args['trained_dir']
+    tokenizer.save_pretrained(output_path)
+    model.save_pretrained(output_path)

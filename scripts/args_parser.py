@@ -1,6 +1,8 @@
+from transformers import TrainingArguments
 import yaml
 import argparse
-from transformers import TrainingArguments
+import wandb
+from papertown.papertown_dataset import DP
 
 class FileLoader:
     @staticmethod
@@ -42,9 +44,10 @@ class ArgsHandler:
         parser.add_argument("--name", type=str)
         parser.add_argument("--entity", type=str)
         parser.add_argument("--project", type=str)
+        parser.add_argument("--group", type=str)
 
-        parser.add_argument("--gradient_accumulation_steps", type=int, default=256, 
-                    help="Number of steps for gradient accumulation. Also used for block_size. Max value is 2,048.")
+        parser.add_argument("--block_size", type=int, default=256, 
+                    help="Number of steps for gradient accumulation. Also used for gradient_accumulation_steps. Max value is 2,048.")
         parser.add_argument("--logging_steps", type=int, default=2, 
                             help="Number of steps for logging. Also used for save_steps.")
         parser.add_argument("--learning_rate", type=float, default=5e-4)
@@ -61,9 +64,9 @@ class ArgsHandler:
         parser.add_argument("--overwrite_output_dir", default=True)
         parser.add_argument("--output_dir", type=str, default="./output", help="Directory where checkpoints will be saved.")
         parser.add_argument("--trained_dir", type=str, default="./trained", help="Directory where the trained model will be saved.")
-        parser.add_argument("--test_run", type=int, default=None)
+        parser.add_argument("--test_run", type=int)
 
-        parser.add_argument("--dp_lambda", type=int, default=None)
+        parser.add_argument("--dp_lambda", type=int)
 
         return parser
     
@@ -73,10 +76,22 @@ class ArgsHandler:
             if key not in args_dict or args_dict[key] is None or args_dict[key] == self.parser.get_default(key):
                 args_dict[key] = value
         return args_dict
-
+    
+    def _create_composer_args(self, args_dict):
+        composer_args = {
+            'format': 'pre',
+            'prefetch': 1,
+            'url_list': FileLoader.load_urls_from_txtfile(args_dict['urls']),
+            'block_size': args_dict['block_size'],
+        }
+        if args_dict['test_run'] is not None:
+            composer_args['test_run'] = args_dict['test_run']
+    
+        return composer_args
+        
     def _create_training_args(self, args_dict):
         training_args = TrainingArguments(
-            gradient_accumulation_steps = args_dict['gradient_accumulation_steps'],
+            gradient_accumulation_steps = args_dict['block_size'],
             logging_steps = args_dict['logging_steps'],
             save_steps = args_dict['logging_steps'],
             learning_rate = args_dict['learning_rate'],
@@ -98,24 +113,35 @@ class ArgsHandler:
         args = self.parser.parse_args()
         config_from_file = FileLoader.load_from_yamlfile(args.config)
         args_dict = self._update_args_with_config(args, config_from_file)
+        composer_args = self._create_composer_args(args_dict)
         training_args = self._create_training_args(args_dict)
-        return args_dict, training_args
+        return args_dict, composer_args, training_args
 
-    
-class ModelCreator:
-    @staticmethod
-    def create(model_class, args, tokenizer):
-        model_kwargs = {
-            'tokenizer': tokenizer,
-            'max_length': args.get('max_length'),
-            'n_dims': args.get('n_dims'),
-            'n_heads': args.get('n_heads'),
-            'n_layers': args.get('n_layers'),
-            'intermediate_size': args.get('intermediate_size')
+def initialize_wandb(args):
+    wandb_kwargs = {
+            'entity': args.get('entity'),
+            'project': args.get('project'),
+            'name': args.get('name'),
+            'group': args.get('group')
         }
-        return model_class(**{k: v for k, v in model_kwargs.items() if v is not None})
+    wandb_kwargs = {k: v for k, v in wandb_kwargs.items() if v is not None}
+    wandb.init(**wandb_kwargs)
+    wandb.alert(title="Job Started", text="動いたよ! Yay!")
 
-if __name__ == "__main__":
-    args_handler = ArgsHandler()
-    args = args_handler.get_args()
-    print(args)
+def create_model(model_class, args, tokenizer):
+    model_kwargs = {
+        'tokenizer': tokenizer,
+        'max_length': args.get('max_length'),
+        'n_dims': args.get('n_dims'),
+        'n_heads': args.get('n_heads'),
+        'n_layers': args.get('n_layers'),
+        'intermediate_size': args.get('intermediate_size')
+    }
+    return model_class(**{k: v for k, v in model_kwargs.items() if v is not None})
+
+def add_noise(args, composer_args, tokenizer):
+    if args['dp_lambda'] is not None:
+        composer_args['build_fn'] = DP(tokenizer, lambda_=args['dp_lambda'])
+        print(f"Set lambda to {args['dp_lambda']}")
+    return composer_args
+    

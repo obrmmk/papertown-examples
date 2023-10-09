@@ -3,6 +3,7 @@
 entity : "team"
 project : "hogehoge"
 name : "testjob"
+group : "testgroup"
 
 # Model Configuration
 
@@ -14,7 +15,7 @@ intermediate_size : 2048
 # Training Configuration
 
 test_run : 10000
-# gradient_accumulation_steps: 256
+# block_size: 256
 # logging_steps: 2
 # num_train_epochs: 3
 # save_total_limit: 5
