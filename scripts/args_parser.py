@@ -75,6 +75,7 @@ class ArgsHandler:
         for key, value in config_from_file.items():
             if key not in args_dict or args_dict[key] is None or args_dict[key] == self.parser.get_default(key):
                 args_dict[key] = value
+        args_dict['accumulation_steps'] = args_dict['block_size'] 
         return args_dict
     
     def _create_composer_args(self, args_dict):
@@ -91,7 +92,7 @@ class ArgsHandler:
         
     def _create_training_args(self, args_dict):
         training_args = TrainingArguments(
-            gradient_accumulation_steps = args_dict['block_size'],
+            gradient_accumulation_steps = args_dict['accumulation_steps'],
             logging_steps = args_dict['logging_steps'],
             save_steps = args_dict['logging_steps'],
             learning_rate = args_dict['learning_rate'],
@@ -117,31 +118,30 @@ class ArgsHandler:
         training_args = self._create_training_args(args_dict)
         return args_dict, composer_args, training_args
 
-def initialize_wandb(args):
+def initialize_wandb(args_dict):
     wandb_kwargs = {
-            'entity': args.get('entity'),
-            'project': args.get('project'),
-            'name': args.get('name'),
-            'group': args.get('group')
+            'entity': args_dict.get('entity'),
+            'project': args_dict.get('project'),
+            'name': args_dict.get('name'),
+            'group': args_dict.get('group')
         }
     wandb_kwargs = {k: v for k, v in wandb_kwargs.items() if v is not None}
     wandb.init(**wandb_kwargs)
     wandb.alert(title="Job Started", text="動いたよ! Yay!")
 
-def create_model(model_class, args, tokenizer):
+def create_model(model_class, args_dict, tokenizer):
     model_kwargs = {
         'tokenizer': tokenizer,
-        'max_length': args.get('max_length'),
-        'n_dims': args.get('n_dims'),
-        'n_heads': args.get('n_heads'),
-        'n_layers': args.get('n_layers'),
-        'intermediate_size': args.get('intermediate_size')
+        'max_length': args_dict.get('max_length'),
+        'n_dims': args_dict.get('n_dims'),
+        'n_heads': args_dict.get('n_heads'),
+        'n_layers': args_dict.get('n_layers'),
+        'intermediate_size': args_dict.get('intermediate_size')
     }
     return model_class(**{k: v for k, v in model_kwargs.items() if v is not None})
 
-def add_noise(args, composer_args, tokenizer):
-    if args['dp_lambda'] is not None:
-        composer_args['build_fn'] = DP(tokenizer, lambda_=args['dp_lambda'])
-        print(f"Set lambda to {args['dp_lambda']}")
+def add_noise(args_dict, composer_args, tokenizer):
+    if args_dict['dp_lambda'] is not None:
+        composer_args['build_fn'] = DP(tokenizer, lambda_=args_dict['dp_lambda'])
+        print(f"Set lambda to {args_dict['dp_lambda']}")
     return composer_args
-    
