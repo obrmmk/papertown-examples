@@ -32,6 +32,7 @@ class ArgsHandler:
         parser.add_argument('--local_rank', type=int, default=-1, help='Local rank for distributed training')
         parser.add_argument('--deepspeed', type=str, help='Path to deepspeed config file')
 
+        parser.add_argument('--model', type=str, required=True, help="Select the model you want to use; available options are 'T5', 'GPT2', 'GPTNeoX', 'Llama2'.")
         parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
         parser.add_argument("--urls", type=str, required=True, help="Path to the file containing URLs")
 
