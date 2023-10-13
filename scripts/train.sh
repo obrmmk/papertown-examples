@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -l h_rt=00:10:00
+#$ -l h_rt=00:03:00
 #$-j y
 #$-m b
 #$-m a
@@ -15,5 +15,6 @@ export PT_CACHE_DIR=$SGE_LOCALDIR
 
 CONFIG_PATH="../config/training_setup.yaml"  # Configuration for the training setup
 URLS_PATH="../datasets/urls.txt"             # List of URLs for datasets
+MODEL_NAME="Llama2" # available options are 'T5', 'GPT2', 'GPTNeoX', 'Llama2'
 
-python3 train.py --config $CONFIG_PATH --urls $URLS_PATH
+python3 train.py --config $CONFIG_PATH --urls $URLS_PATH --model $MODEL_NAME

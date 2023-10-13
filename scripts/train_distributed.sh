@@ -17,5 +17,6 @@ export PT_CACHE_DIR=$SGE_LOCALDIR
 CONFIG_PATH="../config/training_setup.yaml"  # Configuration for the training setup
 URLS_PATH="../datasets/urls.txt"             # List of URLs for datasets
 DEEPSPEED_CONFIG="../ds_config/ds_config_zero2.json"  # DeepSpeed configuration file
+MODEL_NAME="Llama2" # available options are 'T5', 'GPT2', 'GPTNeoX', 'Llama2'
 
-deepspeed train.py --deepspeed $DEEPSPEED_CONFIG --config $CONFIG_PATH --urls $URLS_PATH 
+deepspeed train.py --deepspeed $DEEPSPEED_CONFIG --config $CONFIG_PATH --urls $URLS_PATH --model $MODEL_NAME

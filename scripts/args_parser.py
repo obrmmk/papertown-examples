@@ -32,10 +32,10 @@ class ArgsHandler:
         parser.add_argument('--local_rank', type=int, default=-1, help='Local rank for distributed training')
         parser.add_argument('--deepspeed', type=str, help='Path to deepspeed config file')
 
-        parser.add_argument('--model', type=str, required=True, help="Select the model you want to use; available options are 'T5', 'GPT2', 'GPTNeoX', 'Llama2'.")
         parser.add_argument("--config", type=str, required=True, help="Path to the configuration file")
         parser.add_argument("--urls", type=str, required=True, help="Path to the file containing URLs")
 
+        parser.add_argument('--model', type=str, required=True, help="Select the model you want to use; available options are 'T5', 'GPT2', 'GPTNeoX', 'Llama2'.")
         parser.add_argument("--max_length", type=int, default=None)
         parser.add_argument("--n_dims", type=int, default=None)
         parser.add_argument("--n_heads", type=int, default=None)
@@ -74,9 +74,11 @@ class ArgsHandler:
     def _update_args_with_config(self, args, config_from_file):
         args_dict = vars(args)
         for key, value in config_from_file.items():
-            if key not in args_dict or args_dict[key] is None or args_dict[key] == self.parser.get_default(key):
+            if key == 'accumulation_steps':
+                pass
+            elif key not in args_dict or args_dict[key] is None or args_dict[key] == self.parser.get_default(key):
                 args_dict[key] = value
-        args_dict['accumulation_steps'] = args_dict['block_size'] 
+        args_dict['accumulation_steps'] = args_dict['block_size']
         return args_dict
     
     def _create_composer_args(self, args_dict):
@@ -146,3 +148,9 @@ def add_noise(args_dict, composer_args, tokenizer):
         composer_args['build_fn'] = DP(tokenizer, lambda_=args_dict['dp_lambda'])
         print(f"Set lambda to {args_dict['dp_lambda']}")
     return composer_args
+
+    
+if __name__ == "__main__":
+    args_handler = ArgsHandler()
+    args = args_handler.get_args()
+    print(args)
